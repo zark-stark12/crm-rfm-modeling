@@ -1,7 +1,7 @@
-# Modeling-Modules
-
-Following Repository contains packages for different models for different purposes listed below written in Python.
-
+# CRM-RFM Modeling
+```
+pip install crm-rfm-modeling
+```
 This package should be used with the intent of a CRM analysis in order to score their CRM dataset with
 the well known method of RFM.
 
