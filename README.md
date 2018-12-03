@@ -5,6 +5,15 @@ Following Repository contains packages for different models for different purpos
 This package should be used with the intent of a CRM analysis in order to score their CRM dataset with
 the well known method of RFM.
 
+```python
+import crm_rfm_modeling
+from crm_rfm_modeling import rfm
+
+rfm_obj0 = crm_rfm_modeling.rfm.RFM()
+rfm_obj1 = rfm.RFM()
+```
+
+
 RFM (Recency - Frequency - Monetary):
   - RFM Package used to model and score CRM data with the following scoring methods: Quintile Scoring, Mean Scoring, and Median Scoring.
     The package allows custom scoring on each variable related to Recency, Frequency, and Monetary. It is important to format the data 
