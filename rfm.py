@@ -4,11 +4,11 @@ Created on Wed Oct 17 11:25:52 2018
 
 @author: juan.zarco
 """
-from copy import deepcopy
 import pandas as pd
 import numpy as np
-import sys
 from datetime import datetime
+from copy import deepcopy
+import sys
 
 class RFM:
     '''
@@ -42,9 +42,11 @@ class RFM:
         else:
             raise ValueError
     
-    def fit(self,data,dataset_type='customer',scoring_method="Quintile",**kwargs):
+    def fit(self,data,dataset_type='customer',scoring_method="Quintile",recency_end_date=None,**kwargs):
         '''
         for model fitting: scoring_method - "Mean", "Median", or "Quintile"; scoring_method is set to "Quintile" by default.
+
+        Recency_end_date: Accepted date formats - "01/01/2010" or "01-01-2010" i.e. "Month - Day - Year"; This is to be used if dataset_type is transactional otherwise it is ignored.
         
         Accpeted **kwargs:
             "recency_scoring_method","frequency_scoring_method", and "monetary_scoring_method";
@@ -55,10 +57,19 @@ class RFM:
             date_col = df.columns[1]
             transaction_col = df.columns[2]
             df[date_col] = pd.to_datetime(df[date_col])
+
+            if recency_end_date is not None:
+                try:
+                    end_date = datetime.strptime(recency_end_date,"%m/%d/%Y")
+                except:
+                    try:
+                        end_date = datetime.strptime(recency_end_date,"%m-%d-%Y")
+                    except Exception:
+                        raise ValueError("Unexpected error: {}".format(sys.exc_info()[0]))
+            elif recency_end_date is None:
+                end_date = datetime.today()
             
-            today_date = datetime.today()
-            
-            df_recency = df.groupby([id_col])[date_col].max().apply(lambda date: (today_date - date).days).astype(float)
+            df_recency = df.groupby([id_col])[date_col].max().apply(lambda date: (end_date - date).days).astype(float)
             df_frequency = df.groupby([id_col])[date_col].count().astype(float)
             df_monetary = df.groupby([id_col])[transaction_col].sum().astype(float)
             full_df = pd.concat([df_recency,df_frequency,df_monetary],axis=1)
@@ -75,11 +86,11 @@ class RFM:
             allowed_kwargs = ['recency_scoring_method','frequency_scoring_method','monetary_scoring_method']
             
             def catch_exception(values):
-            	val = values[0]
-            	if val in allowed_kwargs:
-            		return values
-            	else:
-            		raise ValueError
+                val = values[0]
+                if val in allowed_kwargs:
+                    return values
+                else:
+                    raise ValueError("Incorrect Kwarg: {}".format(val))
 
             self.__dict__.update(catch_exception((k, v)) for k, v in kwargs.items())
             
@@ -102,7 +113,6 @@ class RFM:
                     dataset_copy = dataset
                     if func == pd.Series.quantile:
                         qnt = func(dataset_copy[variable],[0.2,0.4,0.6,0.8])
-                        #print(qnt)
                         if 'recency' in variable.lower():
                             for i in np.arange(5,1,-1):
                                 val0 = qnt[qnt.index[i-2]]
@@ -184,9 +194,14 @@ class RFM:
             print('Completed Fitting R-F-M.')
             #return self
         else:
-            raise ValueError
+            raise ValueError("""Unexpected keyword argument received. Accepted arguments are - \n
+            Dataset Types: {}\n
+            Scoring Methods : {}\n
+            Received: {}""".format(["customer","transactional"],["Mean","Median","Quintile"],[self.dataset_type,self.scoring_method]))
                  
-    
+    def get_fitted_data(self):
+        return self.data
+
     def __str__(self):
         s = "Parameters:\n\tDataset_Type: "+str(self.dataset_type)+"\n\tScoring_Method: "+str(self.scoring_method)+"\n\tWeights: "+str(self.weights)+"\n"
         

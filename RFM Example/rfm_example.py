@@ -11,7 +11,7 @@ to highlight both examples.
 """
 
 import pandas as pd
-import RFM_Model as rfm
+from crm_rfm_modeling import rfm
 from datetime import datetime
 
 data = pd.read_csv('Retail_Data_Transactions.csv')
@@ -73,4 +73,4 @@ results = rfm.data
 print_results(results)
 
 #Print the dataframe result head
-print(rfm.data.head())
+print(rfm.get_fitted_data().head())
