@@ -4,11 +4,15 @@ Created on Wed Oct 17 11:25:52 2018
 
 @author: juan.zarco
 """
-import pandas as pd
-import numpy as np
-from datetime import datetime
 from copy import deepcopy
 import sys
+try:
+    from rfm_utils import *
+except ImportError:
+    from RFM.rfm_utils import *
+
+accepted_keys = ['recency_scoring_method', 'frequency_scoring_method', 'monetary_scoring_method']
+accepted_values = ['mean', 'median', 'quintile']
 
 class RFM:
     '''
@@ -37,14 +41,14 @@ class RFM:
     '''
     
     def __init__(self,weights=(0.2,0.2,0.6)):
-        if sum(weights) == 1:
+        if sum(weights) == 1 and len(weights) == 3:
             self.weights = weights
         else:
             raise ValueError
     
-    def fit(self,data,dataset_type='customer',scoring_method="Quintile",recency_end_date=None,**kwargs):
+    def fit(self,data,dataset_type='customer',scoring_method="quintile",recency_end_date=None,**kwargs):
         '''
-        for model fitting: scoring_method - "Mean", "Median", or "Quintile"; scoring_method is set to "Quintile" by default.
+        for model fitting: scoring_method - "mean", "median", or "quintile"; scoring_method is set to "quintile" by default.
 
         Recency_end_date: Accepted date formats - "01/01/2010" or "01-01-2010" i.e. "Month - Day - Year"; This is to be used if dataset_type is transactional otherwise it is ignored.
         
@@ -52,155 +56,90 @@ class RFM:
             "recency_scoring_method","frequency_scoring_method", and "monetary_scoring_method";
             Set the value of these **kwargs to the following defined scoring methods listed above.
         '''
-        def convert_transaction_to_user(df):
-            id_col = df.columns[0]
-            date_col = df.columns[1]
-            transaction_col = df.columns[2]
-            df[date_col] = pd.to_datetime(df[date_col])
 
-            if recency_end_date is not None:
+        ####CHECK PARAMETERS ARE VALID####
+
+        self.scoring_method = scoring_method.lower()
+        self.dataset_type = dataset_type.lower()
+        if recency_end_date is not None:
+            try:
+                self.recency_end_date = datetime.strptime(recency_end_date, "%m/%d/%Y")
+            except:
                 try:
-                    end_date = datetime.strptime(recency_end_date,"%m/%d/%Y")
+                    self.recency_end_date = datetime.strptime(recency_end_date, "%m-%d-%Y")
                 except:
                     try:
-                        end_date = datetime.strptime(recency_end_date,"%m-%d-%Y")
+                        self.recency_end_date = datetime.strptime(recency_end_date, "%d-%b-%y")
                     except Exception:
-                        raise ValueError("Unexpected error: {}".format(sys.exc_info()[0]))
-            elif recency_end_date is None:
-                end_date = datetime.today()
-            
-            df_recency = df.groupby([id_col])[date_col].max().apply(lambda date: (end_date - date).days).astype(float)
-            df_frequency = df.groupby([id_col])[date_col].count().astype(float)
-            df_monetary = df.groupby([id_col])[transaction_col].sum().astype(float)
-            full_df = pd.concat([df_recency,df_frequency,df_monetary],axis=1)
-            full_df.columns = ['Recency','Frequency','Monetary']
-            return full_df
-        
-        boo_0 = ((dataset_type=='customer')or(dataset_type =='transactional'))
-        boo_1 = ((scoring_method == 'Mean') or (scoring_method == 'Median') or (scoring_method == 'Quintile'))
-        # Here we do some initial parameter checking.
-        if boo_0 and boo_1:
-            #Instantiating the variables
-            self.scoring_method = scoring_method
-            self.dataset_type = dataset_type
-            allowed_kwargs = ['recency_scoring_method','frequency_scoring_method','monetary_scoring_method']
-            
-            def catch_exception(values):
-                val = values[0]
-                if val in allowed_kwargs:
-                    return values
-                else:
-                    raise ValueError("Incorrect Kwarg: {}".format(val))
+                        raise Exception("Unexpected error: {}".format(sys.exc_info()[0]))
 
-            self.__dict__.update(catch_exception((k, v)) for k, v in kwargs.items())
-            
-            self.data = deepcopy(data)
-            if boo_0:
-                if data.shape[1] != 3:
-                    print('Error: expected 3 columns for dataset type of '+ self.dataset_type +'; received: ' + str(data.shape[1]))
-                    raise ValueError
-            if self.dataset_type == 'transactional':
-                self.data = convert_transaction_to_user(self.data)
-            
-            def get_func(func):
-                func = func.lower()
-                if func == 'quintile':
-                    func = 'quantile'
-                func = getattr(pd.Series,func)
-                return func
-            
-            def score_variables(dataset,variable,class_dict,func):
-                    dataset_copy = dataset
-                    if func == pd.Series.quantile:
-                        qnt = func(dataset_copy[variable],[0.2,0.4,0.6,0.8])
-                        if 'recency' in variable.lower():
-                            for i in np.arange(5,1,-1):
-                                val0 = qnt[qnt.index[i-2]]
-                                class_dict[i] = list(dataset_copy[dataset_copy[variable] >= val0].index)
-                                dataset_copy = dataset_copy[dataset_copy[variable] < val0]
-                            class_dict[i-1] = list(dataset_copy[variable].index)
-                        else:
-                            for i in range(0,4):
-                                val0 = qnt[qnt.index[i]]
-                                class_dict[i+1] = list(dataset_copy[dataset_copy[variable] <= val0].index)
-                                dataset_copy = dataset_copy[dataset_copy[variable] > val0]
-                            class_dict[i+2] = list(dataset_copy[variable].index)
-                    #### Other case where the function of choice is not quintile.
-                    else:
-                        if 'recency' not in variable.lower():
-                            for i in range(0,4):
-                                divider = func(dataset_copy[variable])
-                                class_dict[i+1] = list(dataset_copy[dataset_copy[variable] < divider].index)
-                                dataset_copy = dataset_copy[dataset_copy[variable] >= divider]
-                            class_dict[i+2] = list(dataset_copy[variable].index)
-                        else:
-                            for i in range(0,4):
-                                divider = func(dataset_copy[variable])
-                                class_dict[i+1] = list(dataset_copy[dataset_copy[variable] > divider].index)
-                                dataset_copy = dataset_copy[dataset_copy[variable] <= divider]
-                            class_dict[i+2] = list(dataset_copy[variable].index)
-                    return class_dict
-            
-            def input_scores(dataset,dictionary,label):
-                for key,index_list in dictionary.items():
-                    dataset.loc[index_list,label] = key
-                return dataset
-            
-            def apply_weights(dataset,weights):
-                for col,w_label,weight in zip(dataset[labels],weighted_labels,weights):
-                    dataset[w_label] = dataset[col] * weight
-                return dataset
-            
-            #### Scoring Section
-            recency_class_scores = {}
-            frequency_class_scores = {}
-            monetary_class_scores = {}
-            class_dictionaries = [recency_class_scores,frequency_class_scores,monetary_class_scores]
-            #Retrieving the indexes for each R-F-M categorized within each dictionary for each score
-            data_ = deepcopy(self.data)
-            kwargs_keys = ['recency_scoring_method','frequency_scoring_method','monetary_scoring_method']
-            if len(self.__dict__) > 4:
-                for col,dictionary,key in zip(data_,class_dictionaries,kwargs_keys):
-                    try:
-                        func = self.__dict__[key]
-                        print("Scoring R-F-M using scoring method: '",func,"'...\n")
-                        dictionary = score_variables(data_,col,dictionary,get_func(func))
-                    except:
-                        print("Scoring R-F-M using scoring method: '",self.scoring_method,"'...\n")
-                        dictionary = score_variables(data_,col,dictionary,get_func(self.scoring_method))
-                del(data_)
+        if not ((dataset_type=='customer')or(dataset_type =='transactional')):
+            raise ValueError('Unexpected value for dataset_type: {}'.format(dataset_type))
+        elif not ((self.scoring_method == 'mean') or (self.scoring_method == 'median') or (self.scoring_method == 'quintile')):
+            raise ValueError('Unexpected value for scoring_method')
+
+
+
+        for key, val in kwargs.items():
+            if key not in accepted_keys:
+                raise ValueError('Unexpected key inputted: {}'.format(key))
+            elif val not in accepted_values:
+                raise ValueError('Unexpected value inputted: {}'.format(val))
             else:
-                print("Scoring R-F-M using scoring method: '",self.scoring_method,"'...\n")
-                for col,dictionary in zip(data_,class_dictionaries):
-                    dictionary = score_variables(data_,col,dictionary,get_func(self.scoring_method))
-                del(data_)
-            
-            print('Placing Scores in dataset...\n')
-            
-            self.data['Recency_Scores'] = 0
-            self.data['Frequency_Scores'] = 0
-            self.data['Monetary_Scores'] = 0
-            self.data['Recency_Weighted_Scores'] = 0
-            self.data['Frequency_Weighted_Scores'] = 0
-            self.data['Monetary_Weighted_Scores'] = 0
-            labels = ['Recency_Scores','Frequency_Scores','Monetary_Scores']
-            weighted_labels = ['Recency_Weighted_Scores','Frequency_Weighted_Scores','Monetary_Weighted_Scores']
-            
-            for label,dictionary in zip(labels,class_dictionaries):
-                self.data = input_scores(self.data,dictionary,label)
-            print('Applying weights to scores...\n')
-            
-            self.data = apply_weights(self.data,self.weights)
-            print('Completed Fitting R-F-M.')
-            #return self
+                self.__dict__.update({key: val})
+
+        self.data = deepcopy(data)
+        if self.dataset_type == 'customer':
+            if self.data.shape[1] != 3:
+                raise ValueError('Error: expected 3 columns for dataset type of '+ self.dataset_type +'; received: ' + str(data.shape[1]))
+
+        if self.dataset_type == 'transactional':
+            self.data = convert_transaction_to_user(self.data, recency_end_date=recency_end_date)
+
+        #### Scoring Section
+        #Retrieving the indexes for each R-F-M categorized within each dictionary for each score
+
+        self.cutoffs = {}
+        if 'recency_scoring_method' in self.__dict__:
+            recency_cutoffs = build_cutoffs(self.data, 'recency', self.__dict__['recency_scoring_method'])
         else:
-            raise ValueError("""Unexpected keyword argument received. Accepted arguments are - \n
-            Dataset Types: {}\n
-            Scoring Methods : {}\n
-            Received: {}""".format(["customer","transactional"],["Mean","Median","Quintile"],[self.dataset_type,self.scoring_method]))
-                 
+            recency_cutoffs = build_cutoffs(self.data, 'recency', self.scoring_method)
+
+        if 'frequency_scoring_method' in self.__dict__:
+            frequency_cutoffs = build_cutoffs(self.data, 'frequency', self.__dict__['frequency_scoring_method'])
+        else:
+            frequency_cutoffs = build_cutoffs(self.data, 'frequency', self.scoring_method)
+
+        if 'monetary_scoring_method' in self.__dict__:
+            monetary_cutoffs = build_cutoffs(self.data, 'monetary', self.__dict__['monetary_scoring_method'])
+        else:
+            monetary_cutoffs = build_cutoffs(self.data, 'monetary', self.scoring_method)
+        self.cutoffs.update({'recency': recency_cutoffs})
+        self.cutoffs.update({'frequency': frequency_cutoffs})
+        self.cutoffs.update({'monetary' : monetary_cutoffs})
+
+        self.data = input_scores(self.data, recency_cutoffs, 'recency')
+        self.data = input_scores(self.data, frequency_cutoffs, 'frequency')
+        self.data = input_scores(self.data, monetary_cutoffs, 'monetary')
+
+        self.data = apply_weights(self.data, ['recency', 'frequency', 'monetary'], self.weights)
+
+        return self
+
     def get_fitted_data(self):
         return self.data
+
+    def summary_statistics(self):
+        n_obs = self.data.shape[0]
+        recency_summary = self.data['recency_scores'].value_counts() / n_obs
+        frequency_summary = self.data['frequency_scores'].value_counts() / n_obs
+        monetary_summary = self.data['monetary_scores'].value_counts() / n_obs
+
+        summaries = [recency_summary, frequency_summary, monetary_summary]
+
+        summary_df = pd.concat(summaries, axis=1)
+
+        return summary_df
 
     def __str__(self):
         s = "Parameters:\n\tDataset_Type: "+str(self.dataset_type)+"\n\tScoring_Method: "+str(self.scoring_method)+"\n\tWeights: "+str(self.weights)+"\n"
