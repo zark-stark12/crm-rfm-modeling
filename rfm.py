@@ -55,6 +55,13 @@ class RFM:
         Accpeted **kwargs:
             "recency_scoring_method","frequency_scoring_method", and "monetary_scoring_method";
             Set the value of these **kwargs to the following defined scoring methods listed above.
+
+        dataset_type: "customer" dataset should be labeled row by row for each individual user or consumer. Three columns should be listed
+            containing: Number of days since last transaction, Number of Transactions occurred, and the total monetary value
+            of the transactions. Each column should be labeled 'recency', 'frequency', and 'monetary'
+
+            "transactional" dataset should be a log of all transactions labeled by a User Identification (first column). Two columns should be
+            listed containing: date of each transactions (second column) and the monetary value of each transaction (third column).
         '''
 
         ####CHECK PARAMETERS ARE VALID####
@@ -124,8 +131,6 @@ class RFM:
 
         self.data = apply_weights(self.data, ['recency', 'frequency', 'monetary'], self.weights)
 
-        return self
-
     def get_fitted_data(self):
         return self.data
 
@@ -139,7 +144,7 @@ class RFM:
 
         summary_df = pd.concat(summaries, axis=1)
 
-        return summary_df
+        return summary_df.fillna(0)
 
     def __str__(self):
         s = "Parameters:\n\tDataset_Type: "+str(self.dataset_type)+"\n\tScoring_Method: "+str(self.scoring_method)+"\n\tWeights: "+str(self.weights)+"\n"
