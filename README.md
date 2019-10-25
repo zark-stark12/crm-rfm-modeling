@@ -6,11 +6,12 @@ This package should be used with the intent of a CRM analysis in order to score 
 the well known method of RFM.
 
 ```python
-import crm_rfm_modeling
-from crm_rfm_modeling import rfm
+import RFM
+from RFM import rfm
 
-rfm_obj0 = crm_rfm_modeling.rfm.RFM()
-rfm_obj1 = rfm.RFM()
+model = rfm()
+#or
+model = RFM.rfm()
 ```
 
 
