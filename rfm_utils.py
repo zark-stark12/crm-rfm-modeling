@@ -30,7 +30,6 @@ def get_func(func):
 
 
 def build_cutoffs(dataset, variable, func):
-    __dict = {}
     dataset_copy = dataset
     func = get_func(func)
     if (func == pd.Series.quantile) and ('recency' != variable.lower()):
@@ -56,31 +55,31 @@ def build_cutoffs(dataset, variable, func):
     #### Other case where the function of choice is not quintile.
     else:
         if 'recency' != variable.lower():
-            mean_list = list()
+            calc_list = list()
             for i in range(0, 4):
                 divider = func(dataset_copy[variable])
-                mean_list.append(divider)
+                calc_list.append(divider)
                 dataset_copy = dataset_copy[dataset_copy[variable] >= divider]
             mn = dataset_copy[variable].min()
             mx = dataset_copy[variable].max()
-            cutoffs = [(mn, mean_list[0]),
-                       (mean_list[0], mean_list[1]),
-                       (mean_list[1], mean_list[2]),
-                       (mean_list[2], mean_list[3]),
-                       (mean_list[3], mx)]
+            cutoffs = [(mn, calc_list[0]),
+                       (calc_list[0], calc_list[1]),
+                       (calc_list[1], calc_list[2]),
+                       (calc_list[2], calc_list[3]),
+                       (calc_list[3], mx)]
         else:
-            mean_list = list()
+            calc_list = list()
             for i in range(0,4):
                 divider = func(dataset_copy[variable])
-                mean_list.append(divider)
+                calc_list.append(divider)
                 dataset_copy = dataset_copy[dataset_copy[variable] <= divider]
             mn = dataset_copy[variable].min()
             mx = dataset_copy[variable].max()
-            cutoffs = [(mx, mean_list[3]),
-                       (mean_list[3], mean_list[2]),
-                       (mean_list[2], mean_list[1]),
-                       (mean_list[1], mean_list[0]),
-                       (mean_list[0], mn)]
+            cutoffs = [(mx, calc_list[3]),
+                       (calc_list[3], calc_list[2]),
+                       (calc_list[2], calc_list[1]),
+                       (calc_list[1], calc_list[0]),
+                       (calc_list[0], mn)]
     return cutoffs
 
 def mf_mapper(cutoffs, val):
@@ -98,9 +97,8 @@ def r_mapper(cutoffs, val):
             return i + 1
         elif val == bounds[1]:
             return i + 1
-        elif (val < bounds[0]) and (val >= bounds[1]):
+        elif (val <= bounds[0]) and (val > bounds[1]):
             return i + 1
-
 
 def input_scores(dataset, cutoffs, variable):
     if variable.lower() == 'recency':
@@ -114,3 +112,12 @@ def apply_weights(dataset, variables, weights):
     for variable, weight in zip(variables, weights):
         dataset[variable+'_weighted'] = dataset[variable+'_scores'] * weight
     return dataset
+
+
+def print_kwargs(k_dict):
+    string = ""
+    if len(k_dict) > 4:
+        string += "Kwargs:\n\t"
+        for key, val in k_dict:
+            string += "\t" + str(key) + ": " + str(val) + "\n"
+    return string

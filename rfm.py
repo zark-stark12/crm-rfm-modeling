@@ -148,15 +148,6 @@ class RFM:
 
     def __str__(self):
         s = "Parameters:\n\tDataset_Type: "+str(self.dataset_type)+"\n\tScoring_Method: "+str(self.scoring_method)+"\n\tWeights: "+str(self.weights)+"\n"
-        
-        def print_kwargs(k_dict):
-            string = ""
-            if len(k_dict) > 4:
-                string += "Kwargs:\n\t"
-                for key,val in k_dict:
-                    string += "\t"+str(key)+": "+str(val)+"\n"
-            return string
-        
         output = s + print_kwargs(self.__dict__)
         return output
     
