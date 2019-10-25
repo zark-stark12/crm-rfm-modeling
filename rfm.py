@@ -9,8 +9,10 @@ import sys
 try:
     from rfm_utils import *
 except ImportError:
-    from RFM.rfm_utils import *
-
+    cd = path.abspath(path.dirname(__file__))
+    sys.path.append(cd)
+    from rfm_utils import *
+    
 accepted_keys = ['recency_scoring_method', 'frequency_scoring_method', 'monetary_scoring_method']
 accepted_values = ['mean', 'median', 'quintile']
 
