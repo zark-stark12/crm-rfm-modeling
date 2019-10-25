@@ -125,20 +125,33 @@ class RFM:
         self.cutoffs.update({'frequency': frequency_cutoffs})
         self.cutoffs.update({'monetary' : monetary_cutoffs})
 
-        self.data = input_scores(self.data, recency_cutoffs, 'recency')
-        self.data = input_scores(self.data, frequency_cutoffs, 'frequency')
-        self.data = input_scores(self.data, monetary_cutoffs, 'monetary')
+        self.fitted_data = deepcopy(self.data)
 
-        self.data = apply_weights(self.data, ['recency', 'frequency', 'monetary'], self.weights)
+        self.fitted_data = input_scores(self.fitted_data, recency_cutoffs, 'recency')
+        self.fitted_data = input_scores(self.fitted_data, frequency_cutoffs, 'frequency')
+        self.fitted_data = input_scores(self.fitted_data, monetary_cutoffs, 'monetary')
+
+        self.fitted_data = apply_weights(self.fitted_data, ['recency', 'frequency', 'monetary'], self.weights)
 
     def get_fitted_data(self):
-        return self.data
+        """
+        :return: Returns fitted pandas dataframe object.
+        """
+        return self.fitted_data
 
     def summary_statistics(self):
-        n_obs = self.data.shape[0]
-        recency_summary = self.data['recency_scores'].value_counts() / n_obs
-        frequency_summary = self.data['frequency_scores'].value_counts() / n_obs
-        monetary_summary = self.data['monetary_scores'].value_counts() / n_obs
+        """
+        :return: Returns percentage distribution across the scores within the dataset.
+        """
+        if not hasattr(self, "fitted_data"):
+            raise AttributeError("Data not fitted. Please call fit on the data you wish to model with.")
+        n_obs = self.fitted_data.shape[0]
+        try:
+            recency_summary = self.fitted_data['recency_scores'].value_counts() / n_obs
+            frequency_summary = self.fitted_data['frequency_scores'].value_counts() / n_obs
+            monetary_summary = self.fitted_data['monetary_scores'].value_counts() / n_obs
+        except Exception:
+            raise Exception("Unexpected error: {}".format(sys.exc_info()[0]))
 
         summaries = [recency_summary, frequency_summary, monetary_summary]
 
