@@ -6,8 +6,8 @@ This package should be used with the intent of a CRM analysis in order to score 
 the well known method of RFM. Methodology derived from the following paper: https://link.springer.com/article/10.1057/palgrave.jdm.3240019
 
 ```python
-import rfm
-from rfm import RFM
+from crm_rfm_modeling import rfm
+from crm_rfm_modeling.rfm import RFM
 
 model = RFM()
 #or
