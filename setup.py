@@ -14,7 +14,7 @@ setup(
     description='RFM Modeling Package for modeling Consumer behavior.',
     long_description=readme_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/jzarco/RFM',
+    url='https://github.com/jzarco/crm-rfm-modeling',
     author='Juan Zarco',
     python_requires='>=3.5',
     classifiers=[
