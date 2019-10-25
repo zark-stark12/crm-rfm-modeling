@@ -3,15 +3,15 @@
 pip install crm-rfm-modeling
 ```
 This package should be used with the intent of a CRM analysis in order to score their CRM dataset with
-the well known method of RFM.
+the well known method of RFM. Methodology derived from the following paper: https://link.springer.com/article/10.1057/palgrave.jdm.3240019
 
 ```python
-import RFM
-from RFM import rfm
+import rfm
+from rfm import RFM
 
-model = rfm()
+model = RFM()
 #or
-model = RFM.rfm()
+model = rfm.RFM()
 ```
 
 
