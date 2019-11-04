@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+
 from os import path
 
 cd = path.abspath(path.dirname(__file__))
@@ -9,7 +10,7 @@ with open(path.join(cd,'README.md'), encoding='utf-8') as f:
 setup(
     name='crm-rfm-modeling',
     version='1.0.2',
-    packages=['crm-rfm-modeling'],
+    packages=find_packages(),
     license='GNU General Public License',
     description='RFM Modeling Package for modeling Consumer behavior.',
     long_description=readme_description,
