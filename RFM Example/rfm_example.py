@@ -10,13 +10,12 @@ dataset type in this example is a transactional dataset type. Below we convert t
 to highlight both examples.
 """
 
-import rfm
-from rfm import RFM
+from crm_rfm_modeling import rfm
 
 data = pd.read_csv('Retail_Data_Transactions.csv')
 wgts = (0.1,0.25,0.65)
 
-model = RFM(weights=wgts)
+model = rfm.RFM(weights=wgts)
 
 model.fit(data, dataset_type='transactional')
 

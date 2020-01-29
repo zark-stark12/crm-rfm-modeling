@@ -1,0 +1,10 @@
+README.md
+setup.py
+crm_rfm_modeling/__init__.py
+crm_rfm_modeling/rfm.py
+crm_rfm_modeling/rfm_utils.py
+crm_rfm_modeling.egg-info/PKG-INFO
+crm_rfm_modeling.egg-info/SOURCES.txt
+crm_rfm_modeling.egg-info/dependency_links.txt
+crm_rfm_modeling.egg-info/requires.txt
+crm_rfm_modeling.egg-info/top_level.txt

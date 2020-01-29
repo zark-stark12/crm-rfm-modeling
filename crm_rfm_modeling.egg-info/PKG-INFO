@@ -1,11 +1,11 @@
 Metadata-Version: 2.1
 Name: crm-rfm-modeling
-Version: 1.0.2
+Version: 1.0.4
 Summary: RFM Modeling Package for modeling Consumer behavior.
-Home-page: https://github.com/jzarco/crm-rfm-modeling
+Home-page: https://github.com/zark-stark12/crm-rfm-modeling
 Author: Juan Zarco
 License: GNU General Public License
-Description: # CRM-RFM Modeling
+Description: # CRM-RFM Modeling v1.0.3
         ```
         pip install crm-rfm-modeling
         ```
@@ -13,8 +13,8 @@ Description: # CRM-RFM Modeling
         the well known method of RFM. Methodology derived from the following paper: https://link.springer.com/article/10.1057/palgrave.jdm.3240019
         
         ```python
-        import rfm
-        from rfm import RFM
+        from crm_rfm_modeling import rfm
+        from crm_rfm_modeling.rfm import RFM
         
         model = RFM()
         #or
@@ -41,7 +41,7 @@ Classifier: Intended Audience :: Developers
 Classifier: Development Status :: 4 - Beta
 Classifier: Operating System :: OS Independent
 Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
-Classifier: Topic :: Software Development :: Libraries :: Python ModulesTopic :: CRM Analysis :: RFM Modeling Tools
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Classifier: Programming Language :: Python :: 3.5
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7

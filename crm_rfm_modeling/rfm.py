@@ -13,6 +13,9 @@ except ImportError:
     cd = path.abspath(path.dirname(__file__))
     sys.path.append(cd)
     from rfm_utils import *
+except Exception as e:
+    print("Unexpected error: ", sys.exc_info()[0])
+    raise
 
 accepted_keys = ['recency_scoring_method', 'frequency_scoring_method', 'monetary_scoring_method']
 accepted_values = ['mean', 'median', 'quintile']
