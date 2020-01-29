@@ -1,4 +1,4 @@
-# CRM-RFM Modeling v1.0.3
+# CRM-RFM Modeling v1.0.4
 ```
 pip install crm-rfm-modeling
 ```
